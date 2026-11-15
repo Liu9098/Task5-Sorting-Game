@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Task 5 体检报告解读 · 手机版</title>
+<style>
+:root{
+  --blue:#4A90D9; --blue-dark:#2E6FA8; --blue-border:#B8DCF0; --blue-bg:#EAF4FC;
+  --bg:#F2F6FB; --white:#fff; --text:#2C3E50; --text-light:#6B7C8F;
+  --green:#27AE60; --red:#E74C3C; --shadow:0 4px 14px rgba(44,62,80,.10);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{margin:0;font-family:"Microsoft YaHei","PingFang SC","Segoe UI",sans-serif;
+  background:var(--bg);color:var(--text);line-height:1.5;font-size:16px;overflow-x:hidden}
+
+/* ===== 学号输入 ===== */
+#studentScreen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#EAF4FC,#D6EAF8);padding:24px}
+.st-title{font-size:21px;font-weight:800;color:var(--blue-dark);text-align:center;margin-bottom:4px}
+.st-sub{font-size:14px;color:var(--text-light);margin-bottom:22px;text-align:center}
+.id-input{width:300px;max-width:82vw;text-align:center;font-size:24px;font-weight:800;color:var(--blue-dark);
+  background:#fff;border:2px solid var(--blue-border);border-radius:12px;padding:12px 14px;margin-bottom:18px;letter-spacing:2px;min-height:54px}
+.id-input.placeholder{color:#A9B6C2;font-weight:600;font-size:18px;letter-spacing:0}
+.id-input.shake{animation:shake .4s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.keypad{display:grid;grid-template-columns:repeat(3,86px);gap:12px;margin-bottom:20px}
+.key{height:58px;border-radius:12px;background:#fff;border:2px solid var(--blue-border);color:var(--blue-dark);
+  font-size:26px;font-weight:800;display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none}
+.key:active{background:var(--blue-bg)}
+.key.clear{color:var(--text-light);font-size:18px}
+.key.ok{background:var(--blue);color:#fff;border-color:var(--blue);font-size:20px}
+.start-btn{width:300px;max-width:82vw;height:56px;border:none;border-radius:14px;background:var(--blue);color:#fff;
+  font-size:20px;font-weight:800;cursor:pointer;box-shadow:var(--shadow)}
+.start-btn:active{background:var(--blue-dark)}
+
+/* ===== 游戏 ===== */
+#gameScreen{display:none;max-width:480px;margin:0 auto;padding:12px 14px 36px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.timer{font-size:26px;font-weight:800;color:var(--blue-dark)}
+.timer.low{color:var(--red)}
+.badge{font-size:14px;font-weight:700;color:var(--blue-dark);background:var(--blue-bg);
+  border:1px solid var(--blue-border);border-radius:20px;padding:4px 12px}
+.tools{display:flex;gap:8px}
+.tool{font-size:14px;font-weight:700;color:var(--blue-dark);background:#fff;border:1.5px solid var(--blue-border);
+  border-radius:10px;padding:6px 12px;cursor:pointer}
+.tool.off{color:#A9B6C2}
+.instruction{font-size:14px;color:var(--text-light);background:var(--white);border:1px solid var(--blue-border);
+  border-radius:12px;padding:10px 12px;margin-bottom:14px;line-height:1.6}
+.instruction b{color:var(--blue-dark)}
+.sec-title{font-size:15px;font-weight:800;color:var(--blue-dark);margin:14px 2px 8px}
+
+/* 卡片 */
+.card{background:var(--white);border:2px solid var(--blue-border);border-radius:12px;padding:10px 12px;
+  display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;box-shadow:var(--shadow);width:100%}
+.card:active{transform:scale(.99)}
+.card.selected{outline:3px solid var(--blue);background:var(--blue-bg)}
+.card-emoji{font-size:26px;flex-shrink:0;width:34px;text-align:center}
+.card-body{display:flex;flex-direction:column;line-height:1.25;min-width:0}
+.card-en{font-size:16px;font-weight:800;color:var(--blue-dark)}
+.card-zh{font-size:15px;font-weight:600;color:var(--text)}
+.card-desc{font-size:12.5px;color:var(--text-light);margin-top:2px}
+.card.c0{background:#EAF4FC;border-color:#B8DCF0}
+.card.c1{background:#E8F8F0;border-color:#A9DFBF}
+.card.c2{background:#FEF5E7;border-color:#FAD7A0}
+.card.c3{background:#F3EBFB;border-color:#D2B4DE}
+.card.c0 .card-en{color:#2E6FA8}.card.c1 .card-en{color:#1E8449}
+.card.c2 .card-en{color:#CA6F1E}.card.c3 .card-en{color:#7D3C98}
+
+.pool{display:flex;flex-direction:column;gap:10px}
+.slots{display:flex;flex-direction:column;gap:10px;margin-top:4px}
+.slot{background:#fff;border:2.5px dashed var(--blue-border);border-radius:12px;min-height:62px;
+  display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;position:relative}
+.slot.filled{border-style:solid;border-color:var(--blue);background:var(--blue-bg)}
+.slot.empty-hint{border-color:#9DC3E6}
+.slot-num{position:absolute;top:-10px;left:10px;font-size:13px;font-weight:800;color:#fff;background:var(--blue);
+  width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.slot-hint{font-size:13px;color:#9DB0C2;font-weight:600;margin-left:24px}
+
+.submit-row{display:flex;gap:12px;margin-top:18px}
+.btn{flex:1;height:54px;border:none;border-radius:14px;font-size:18px;font-weight:800;cursor:pointer}
+.btn-submit{background:var(--blue);color:#fff;box-shadow:var(--shadow)}
+.btn-submit:disabled{background:#C2D4E8;color:#fff;cursor:not-allowed;box-shadow:none}
+.btn-clear{background:#fff;color:var(--blue-dark);border:2px solid var(--blue-border)}
+
+/* ===== 结果弹窗 ===== */
+.result-modal{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;display:none;align-items:center;justify-content:center}
+.result-modal.show{display:flex}
+.result-box{background:var(--white);border-radius:16px;padding:24px 22px;text-align:center;max-width:380px;width:90%;box-shadow:0 12px 40px rgba(0,0,0,.25)}
+.result-icon{font-size:48px;margin-bottom:4px}
+.result-box h2{font-size:22px;color:var(--blue-dark);margin:0 0 6px}
+.rating-badge{display:inline-block;font-size:16px;font-weight:800;padding:4px 16px;border-radius:20px;margin-bottom:8px}
+.rating-badge.gold{background:#FFF3CD;color:#B8860B}
+.rating-badge.blue{background:var(--blue-bg);color:var(--blue-dark)}
+.rating-badge.green{background:#E8F8F0;color:#1E8449}
+.rating-badge.orange{background:#FEF5E7;color:#CA6F1E}
+.score{font-size:40px;font-weight:800;color:var(--blue-dark);margin:4px 0}
+.score-max{font-size:18px;color:var(--text-light);font-weight:600}
+.result-detail{text-align:left;background:var(--bg);border-radius:10px;padding:10px 14px;margin:10px 0;font-size:16px}
+.rd-row{display:flex;justify-content:space-between;padding:3px 0}
+.rd-correct{font-weight:800;color:var(--green)}
+.answer-ref{text-align:left;background:var(--bg);border-radius:10px;padding:10px 14px;margin:8px 0}
+.ar-title{font-size:14px;font-weight:800;color:var(--blue-dark);margin-bottom:6px}
+.ans-line{display:flex;align-items:center;gap:8px;font-size:15px;white-space:nowrap;padding:2px 0}
+.ans-num{background:var(--green);color:#fff;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0}
+.ans-zh{color:var(--text-light);font-size:13px}
+.result-btns{display:flex;gap:10px;margin-top:12px}
+.result-btns .btn{font-size:16px;height:48px}
+</style>
+</head>
+<body>
+
+<!-- 学号输入 -->
+<div id="studentScreen">
+  <div class="st-title">Task 5 体检报告解读</div>
+  <div class="st-sub">手机答题 · 请先输入你的学号</div>
+  <div class="id-input placeholder" id="idInput">请输入学号</div>
+  <div class="keypad" id="keypad"></div>
+  <button class="start-btn" id="startAnswerBtn">开始答题</button>
+</div>
+
+<!-- 游戏 -->
+<div id="gameScreen">
+  <div class="topbar">
+    <div class="timer" id="timer">75</div>
+    <div class="badge" id="studentBadge" style="display:none"></div>
+    <div class="tools">
+      <div class="tool" id="soundBtn">🔊 声音</div>
+      <div class="tool" id="resetBtn">↻ 重置</div>
+    </div>
+  </div>
+  <div class="instruction">
+    <b>玩法：</b>① 点上方卡片选中它（变蓝）　② 点下方对应编号的空框放入　③ 放错可点框内卡片退回重选
+  </div>
+
+  <div class="sec-title">候选卡片（打乱顺序）</div>
+  <div class="pool" id="pool"></div>
+
+  <div class="sec-title">你的排序（1 → 4）</div>
+  <div class="slots" id="slots"></div>
+
+  <div class="submit-row">
+    <button class="btn btn-clear" id="clearBtn">清空重选</button>
+    <button class="btn btn-submit" id="submitBtn" disabled>✔ 提交</button>
+  </div>
+</div>
+
+<!-- 结果 -->
+<div class="result-modal" id="resultModal">
+  <div class="result-box">
+    <div class="result-icon" id="resIcon">🏆</div>
+    <h2 id="resTitle">作答完成</h2>
+    <div class="rating-badge" id="resBadge">满分</div>
+    <div class="score" id="resScore">100<span class="score-max">/100</span></div>
+    <div class="result-detail">
+      <div class="rd-row" id="resStudentRow" style="display:none"><span>学号</span><span id="resStudent"></span></div>
+      <div class="rd-row"><span>正确步骤</span><span class="rd-correct" id="resCorrect">4/4</span></div>
+      <div class="rd-row"><span>得分（满分 100）</span><span id="resScoreText">100 / 100</span></div>
+    </div>
+    <div class="answer-ref">
+      <div class="ar-title">正确顺序参考</div>
+      <div id="ansList"></div>
+    </div>
+    <div class="result-btns">
+      <button class="btn btn-clear" id="homeBtn">返回</button>
+      <button class="btn btn-submit" id="replayBtn">再来一局</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ===== 全局参数：N=4 ===== */
+const N = 4;
+const TOTAL_TIME = 75;
+
+/* 正确顺序：总体概述 → 指标说明 → 风险解读 → 健康建议 */
+const CORRECT_ORDER = [
+  { id:"overall",  en:"Overall Summary",     zh:"总体概述", emoji:"📋", desc:"Let's start with a brief summary of your health screening results." },
+  { id:"describe", en:"Describe Indicators",  zh:"指标说明", emoji:"🔬", desc:"Next, I will go through your key laboratory indicators." },
+  { id:"explain",  en:"Explain Risks",        zh:"风险解读", emoji:"⚠️", desc:"Then I will explain what these results may mean for your health." },
+  { id:"advice",   en:"Give Advice",          zh:"健康建议", emoji:"💡", desc:"Here are practical recommendations based on your test results." }
+];
+
+/* ===== 计分与评级 ===== */
+function calcScore(correct, N){ return Math.round((correct / N) * 100); }
+function getRating(correct, N){
+  if(correct === N)                          return { icon:"🏆", label:"满分",   cls:"gold"  };
+  if(correct >= Math.ceil(N * 0.75))         return { icon:"⭐", label:"良好",   cls:"blue"  };
+  if(correct >= Math.ceil(N * 0.5))          return { icon:"✅", label:"合格",   cls:"green" };
+  return                                       { icon:"📚", label:"待提升", cls:"orange" };
+}
+function evaluate(){
+  let correct = 0;
+  for(let i = 0; i < CORRECT_ORDER.length; i++){
+    if(slots[i] === CORRECT_ORDER[i].id) correct++;
+  }
+  return correct;
+}
+
+/* ===== 声音（Web Audio 合成，手机版不内嵌大音频，加载更快） ===== */
+let audioCtx = null;
+let soundOn = true;
+function ensureAudio(){
+  if(!audioCtx){ try{ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){ audioCtx = null; } }
+  if(audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+}
+function tone(freq, start, dur, type, vol){
+  if(!audioCtx || !soundOn) return;
+  const t0 = audioCtx.currentTime + start;
+  const osc = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  osc.type = type || "sine"; osc.frequency.value = freq;
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.linearRampToValueAtTime(vol || 0.2, t0 + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  osc.connect(g); g.connect(audioCtx.destination);
+  osc.start(t0); osc.stop(t0 + dur + 0.03);
+}
+function playSelect(){ ensureAudio(); tone(330, 0, 0.08, "sine", 0.15); }
+function playPlace(){  ensureAudio(); tone(660, 0, 0.12, "sine", 0.20); tone(880, 0.10, 0.14, "sine", 0.20); }
+function playWrong(){  ensureAudio(); tone(180, 0, 0.18, "sawtooth", 0.16); }
+function playFanfare(){ ensureAudio(); const notes=[523,659,784,1047]; notes.forEach((f,i)=> tone(f, i*0.12, 0.20, "triangle", 0.22)); }
+
+/* ===== DOM ===== */
+const studentScreen = document.getElementById("studentScreen");
+const gameScreen    = document.getElementById("gameScreen");
+const idInput       = document.getElementById("idInput");
+const keypadEl      = document.getElementById("keypad");
+const startAnswerBtn= document.getElementById("startAnswerBtn");
+const poolEl        = document.getElementById("pool");
+const slotsEl       = document.getElementById("slots");
+const timerEl       = document.getElementById("timer");
+const studentBadge  = document.getElementById("studentBadge");
+const soundBtn      = document.getElementById("soundBtn");
+const resetBtn      = document.getElementById("resetBtn");
+const clearBtn      = document.getElementById("clearBtn");
+const submitBtn     = document.getElementById("submitBtn");
+const resultModal   = document.getElementById("resultModal");
+const replayBtn     = document.getElementById("replayBtn");
+const homeBtn       = document.getElementById("homeBtn");
+
+let currentStudentId = "";
+let displayOrder = [];
+let slots = new Array(N).fill(null);
+let selectedId = null;
+let timeLeft = TOTAL_TIME;
+let timerInterval = null;
+let paused = false;
+let submitted = false;
+
+/* ===== 学号键盘 ===== */
+function updateIdInput(){
+  if(currentStudentId){ idInput.textContent = currentStudentId; idInput.classList.remove("placeholder"); }
+  else { idInput.textContent = "请输入学号"; idInput.classList.add("placeholder"); }
+}
+function buildKeypad(){
+  const keys = ["1","2","3","4","5","6","7","8","9","清空","0","确定"];
+  keypadEl.innerHTML = "";
+  for(let i = 0; i < keys.length; i++){
+    const v = keys[i];
+    const k = document.createElement("div");
+    k.className = "key" + (v === "清空" ? " clear" : v === "确定" ? " ok" : "");
+    k.textContent = v;
+    k.addEventListener("click", function(){
+      ensureAudio();
+      if(v === "清空"){ currentStudentId = ""; playSelect(); }
+      else if(v === "确定"){ if(!currentStudentId){ shakeId(); playWrong(); return; } playPlace(); }
+      else { if(currentStudentId.length >= 12) return; currentStudentId += v; playSelect(); }
+      updateIdInput();
+    });
+    keypadEl.appendChild(k);
+  }
+}
+function shakeId(){ idInput.classList.remove("shake"); void idInput.offsetWidth; idInput.classList.add("shake"); }
+
+startAnswerBtn.addEventListener("click", function(){
+  ensureAudio();
+  if(!currentStudentId){ shakeId(); playWrong(); return; }
+  enterGame(currentStudentId);
+});
+
+/* ===== 洗牌 ===== */
+function shufflePool(){
+  displayOrder = CORRECT_ORDER.map(function(c){ return c.id; });
+  for(let i = displayOrder.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = displayOrder[i]; displayOrder[i] = displayOrder[j]; displayOrder[j] = tmp;
+  }
+}
+
+/* ===== 渲染 ===== */
+function cardInner(item){
+  return '<span class="card-emoji">' + item.emoji + '</span>' +
+    '<span class="card-body">' +
+      '<span class="card-en">' + item.en + '</span>' +
+      '<span class="card-zh">' + item.zh + '</span>' +
+      '<span class="card-desc">' + item.desc + '</span>' +
+    '</span>';
+}
+function render(){
+  // 候选卡片
+  poolEl.innerHTML = "";
+  for(let i = 0; i < displayOrder.length; i++){
+    const id = displayOrder[i];
+    if(slots.indexOf(id) === -1){
+      const item = CORRECT_ORDER.find(function(c){ return c.id === id; });
+      const stepIdx = CORRECT_ORDER.findIndex(function(c){ return c.id === id; });
+      const card = document.createElement("div");
+      card.className = "card c" + stepIdx + (selectedId === id ? " selected" : "");
+      card.innerHTML = cardInner(item);
+      card.addEventListener("click", function(){ selectCard(id); });
+      poolEl.appendChild(card);
+    }
+  }
+  // 槽位
+  slotsEl.innerHTML = "";
+  for(let i = 0; i < N; i++){
+    const slot = document.createElement("div");
+    slot.className = "slot" + (slots[i] ? " filled" : (selectedId ? " empty-hint" : ""));
+    const num = document.createElement("div");
+    num.className = "slot-num";
+    num.textContent = (i + 1);
+    slot.appendChild(num);
+    if(slots[i]){
+      const item = CORRECT_ORDER.find(function(c){ return c.id === slots[i]; });
+      const stepIdx = CORRECT_ORDER.findIndex(function(c){ return c.id === slots[i]; });
+      const card = document.createElement("div");
+      card.className = "card c" + stepIdx;
+      card.innerHTML = cardInner(item);
+      slot.appendChild(card);
+    } else {
+      const hint = document.createElement("div");
+      hint.className = "slot-hint";
+      hint.textContent = selectedId ? "点此放入选中的卡片" : "点上方卡片后再点此";
+      slot.appendChild(hint);
+    }
+    slot.addEventListener("click", function(){ onSlotClick(i); });
+    slotsEl.appendChild(slot);
+  }
+  updateSubmit();
+}
+function selectCard(id){
+  ensureAudio();
+  selectedId = (selectedId === id) ? null : id;
+  if(selectedId) playSelect(); else playWrong();
+  render();
+}
+function onSlotClick(i){
+  ensureAudio();
+  if(slots[i]){            // 已填 → 退回
+    slots[i] = null; selectedId = null; playSelect(); render();
+  } else if(selectedId){   // 空框 + 已选 → 放入
+    slots[i] = selectedId; selectedId = null; playPlace(); render();
+  } else {
+    playWrong();
+  }
+}
+function updateSubmit(){
+  submitBtn.disabled = (slots.indexOf(null) !== -1);
+}
+clearBtn.addEventListener("click", function(){ ensureAudio(); slots = new Array(N).fill(null); selectedId = null; playSelect(); render(); });
+
+/* ===== 计时 ===== */
+function updateTimer(){
+  timerEl.textContent = timeLeft;
+  timerEl.classList.toggle("low", timeLeft <= 10);
+}
+function startTimer(){
+  clearInterval(timerInterval);
+  timerInterval = setInterval(function(){
+    if(paused || submitted) return;
+    timeLeft--; updateTimer();
+    if(timeLeft <= 0){ clearInterval(timerInterval); doSubmit(true); }
+  }, 1000);
+}
+
+/* ===== 提交 ===== */
+function doSubmit(auto){
+  if(submitted) return;
+  submitted = true;
+  clearInterval(timerInterval);
+  const correct = evaluate();
+  const score = calcScore(correct, N);
+  const rating = getRating(correct, N);
+  document.getElementById("resIcon").textContent = rating.icon;
+  const badge = document.getElementById("resBadge");
+  badge.textContent = rating.label; badge.className = "rating-badge " + rating.cls;
+  document.getElementById("resScore").innerHTML = score + '<span class="score-max">/100</span>';
+  document.getElementById("resCorrect").textContent = correct + "/" + N;
+  document.getElementById("resScoreText").textContent = score + " / 100";
+  const sRow = document.getElementById("resStudentRow");
+  if(currentStudentId){ sRow.style.display = ""; document.getElementById("resStudent").textContent = currentStudentId; }
+  else { sRow.style.display = "none"; }
+  document.getElementById("resTitle").textContent = auto ? "时间到，已自动提交" : "作答完成";
+  const ans = document.getElementById("ansList");
+  ans.innerHTML = "";
+  for(let i = 0; i < CORRECT_ORDER.length; i++){
+    const c = CORRECT_ORDER[i];
+    const line = document.createElement("div");
+    line.className = "ans-line";
+    line.innerHTML = '<span class="ans-num">' + (i + 1) + '</span>' +
+      '<span class="card-en">' + c.en + '</span>' +
+      '<span class="ans-zh">（' + c.zh + '）</span>';
+    ans.appendChild(line);
+  }
+  resultModal.classList.add("show");
+  playFanfare();
+}
+submitBtn.addEventListener("click", function(){ ensureAudio(); doSubmit(false); });
+replayBtn.addEventListener("click", function(){ ensureAudio(); resetGame(); });
+homeBtn.addEventListener("click", function(){
+  ensureAudio();
+  clearInterval(timerInterval); submitted = false; paused = false;
+  resultModal.classList.remove("show");
+  gameScreen.style.display = "none";
+  studentScreen.style.display = "flex";
+});
+
+/* ===== 控制 ===== */
+soundBtn.addEventListener("click", function(){
+  soundOn = !soundOn;
+  soundBtn.textContent = soundOn ? "🔊 声音" : "🔇 静音";
+  soundBtn.classList.toggle("off", !soundOn);
+  if(soundOn){ ensureAudio(); playSelect(); }
+});
+resetBtn.addEventListener("click", function(){ ensureAudio(); resetGame(); });
+
+/* ===== 流程 ===== */
+function resetGame(){
+  clearInterval(timerInterval);
+  submitted = false; paused = false; selectedId = null;
+  slots = new Array(N).fill(null);
+  timeLeft = TOTAL_TIME;
+  resultModal.classList.remove("show");
+  shufflePool();
+  render();
+  updateTimer();
+  startTimer();
+}
+function enterGame(studentId){
+  ensureAudio();
+  currentStudentId = studentId || "";
+  studentScreen.style.display = "none";
+  gameScreen.style.display = "block";
+  if(currentStudentId){
+    studentBadge.textContent = "学号：" + currentStudentId;
+    studentBadge.style.display = "";
+  } else {
+    studentBadge.style.display = "none";
+  }
+  resetGame();
+  window.scrollTo(0, 0);
+}
+
+/* ===== 初始化 ===== */
+buildKeypad();
+updateIdInput();
+shufflePool();
+</script>
+</body>
+</html>
